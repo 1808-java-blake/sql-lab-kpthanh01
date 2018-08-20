@@ -57,7 +57,22 @@
 
 -- 2.7 DELETE
 -- Task – Delete a record in Customer table where the name is Robert Walter (There may be constraints that rely on this, find out how to resolve them).
+	ALTER TABLE invoice
+	DROP CONSTRAINT fk_invoicecustomerid,
+	ADD CONSTRAINT fk_invoicecustomerid
+	   FOREIGN KEY (customerid)
+	   REFERENCES customer(customerid)
+	   ON DELETE CASCADE;
 
+	ALTER TABLE invoiceline
+	DROP CONSTRAINT fk_invoicelineinvoiceid,
+	ADD CONSTRAINT fk_invoicelineinvoiceidid
+	   FOREIGN KEY (invoiceid)
+	   REFERENCES invoice(invoiceid)
+	   ON DELETE CASCADE;
+
+	DELETE FROM customer
+	WHERE firstname = 'Robert' and lastname = 'Walter';
 -- 3.0	SQL Functions
 -- In this section you will be using the Oracle system functions, as well as your own functions, to perform various actions against the database
 
@@ -107,8 +122,15 @@
 
 -- 3.3 User Defined Scalar Functions
 -- Task – Create a function that returns the average price of invoiceline items in the invoiceline table
+	CREATE OR REPLACE FUNCTION get_average_unitprice()
+	RETURNS NUMERIC AS $$
+	BEGIN
+		RETURN AVG(unitprice) FROM invoiceline;
+	END;
+	$$ LANGUAGE plpgsql
 
-
+	select get_average_unitprice();
+	
 -- 3.4 User Defined Table Valued Functions
 -- Task – Create a function that returns all employees who are born after 1968.
 	CREATE OR REPLACE FUNCTION employee_after1968()
@@ -186,6 +208,19 @@
 -- 5.0 Transactions
 -- In this section you will be working with transactions. Transactions are usually nested within a stored procedure. You will also be working with handling errors in your SQL.
 -- Task – Create a transaction that given a invoiceId will delete that invoice (There may be constraints that rely on this, find out how to resolve them).
+	CREATE OR REPLACE FUNCTION delete_invoice(
+		cust_id integer,
+		fname character,
+		lname character,
+		input_email character
+	)
+	RETURNS void AS $$
+	BEGIN
+		INSERT INTO customer (customerid, firstname, lastname, email) VALUES (cust_id, fname, lname, input_email);
+	END;
+	$$ LANGUAGE plpgsql
+
+	SELECT insert_customer(61,'Bryan', 'Pham', 'bryan@fake.com');
 
 -- Task – Create a transaction nested within a stored procedure that inserts a new record in the Customer table
 	CREATE OR REPLACE FUNCTION insert_customer(
@@ -208,14 +243,60 @@
 
 -- 6.1 AFTER/FOR
 -- Task - Create an after insert trigger on the employee table fired after a new record is inserted into the table.
+	CREATE OR REPLACE FUNCTION new_employee()
+	RETURNS	TRIGGER AS $$
+	BEGIN
+		RAISE NOTICE 'Inserted New Employee';
+	END;
+	$$ LANGUAGE plpgsql;
 
+	CREATE TRIGGER add_employee
+	  AFTER INSERT
+	  ON employee
+	  FOR EACH ROW
+	  EXECUTE PROCEDURE new_employee();
 -- Task – Create an after update trigger on the album table that fires after a row is inserted in the table
+	CREATE OR REPLACE FUNCTION new_album()
+	RETURNS	TRIGGER AS $$
+	BEGIN
+		RAISE NOTICE 'Inserted New album';
+	END;
+	$$ LANGUAGE plpgsql;
 
+	CREATE TRIGGER add_album
+	  AFTER INSERT
+	  ON album
+	  FOR EACH ROW
+	  EXECUTE PROCEDURE new_employee();
 -- Task – Create an after delete trigger on the customer table that fires after a row is deleted from the table.
+	CREATE OR REPLACE FUNCTION delete_customer()
+	RETURNS	TRIGGER AS $$
+	BEGIN
+		RAISE NOTICE 'Deleted Customer';
+	END;
+	$$ LANGUAGE plpgsql;
 
+	CREATE TRIGGER remove_customer
+	  AFTER INSERT
+	  ON album
+	  FOR EACH ROW
+	  EXECUTE PROCEDURE delete_customer();
 -- 6.2 INSTEAD OF
 -- Task – Create an instead of trigger that restricts the deletion of any invoice that is priced over 50 dollars.
+	CREATE OR REPLACE FUNCTION restrict_deletion()
+	RETURNS TRIGGER AS $$
+	BEGIN
+		IF invoice.price > 50 THEN
+			RAISE NOTICE 'Cannot delete an invoice greater than $50';
+			RETURN OLD;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql;
 
+	CREATE TRIGGER restrict_deletion_trig
+	BEFORE DELETE ON invoice
+	FOR EACH ROW
+	EXECUTE PROCEDURE restrict_deletion();
 -- 7.0 JOINS
 -- In this section you will be working with combing various tables through the use of joins. You will work with outer, inner, right, left, cross, and self joins.
 
