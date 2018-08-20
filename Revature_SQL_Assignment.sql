@@ -250,11 +250,8 @@
 	END;
 	$$ LANGUAGE plpgsql;
 
-	CREATE TRIGGER add_employee
-	  AFTER INSERT
-	  ON employee
-	  FOR EACH ROW
-	  EXECUTE PROCEDURE new_employee();
+	CREATE TRIGGER new_employee_trigger
+	  AFTER INSERT ON employee FOR EACH ROW EXECUTE PROCEDURE new_employee();
 -- Task – Create an after update trigger on the album table that fires after a row is inserted in the table
 	CREATE OR REPLACE FUNCTION new_album()
 	RETURNS	TRIGGER AS $$
@@ -263,11 +260,8 @@
 	END;
 	$$ LANGUAGE plpgsql;
 
-	CREATE TRIGGER add_album
-	  AFTER INSERT
-	  ON album
-	  FOR EACH ROW
-	  EXECUTE PROCEDURE new_employee();
+	CREATE TRIGGER new_album_trigger
+	  AFTER INSERT ON album FOR EACH ROW EXECUTE PROCEDURE new_employee();
 -- Task – Create an after delete trigger on the customer table that fires after a row is deleted from the table.
 	CREATE OR REPLACE FUNCTION delete_customer()
 	RETURNS	TRIGGER AS $$
@@ -276,11 +270,9 @@
 	END;
 	$$ LANGUAGE plpgsql;
 
-	CREATE TRIGGER remove_customer
+	CREATE TRIGGER delete_customer_trigger
 	  AFTER INSERT
-	  ON album
-	  FOR EACH ROW
-	  EXECUTE PROCEDURE delete_customer();
+	  ON album FOR EACH ROW EXECUTE PROCEDURE delete_customer();
 -- 6.2 INSTEAD OF
 -- Task – Create an instead of trigger that restricts the deletion of any invoice that is priced over 50 dollars.
 	CREATE OR REPLACE FUNCTION restrict_deletion()
@@ -293,10 +285,8 @@
 	END;
 	$$ LANGUAGE plpgsql;
 
-	CREATE TRIGGER restrict_deletion_trig
-	BEFORE DELETE ON invoice
-	FOR EACH ROW
-	EXECUTE PROCEDURE restrict_deletion();
+	CREATE TRIGGER restrict_deletion_trigger
+	BEFORE DELETE ON invoice FOR EACH ROW EXECUTE PROCEDURE restrict_deletion();
 -- 7.0 JOINS
 -- In this section you will be working with combing various tables through the use of joins. You will work with outer, inner, right, left, cross, and self joins.
 
